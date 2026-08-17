@@ -6,7 +6,8 @@ on:
   pull_request:
     branches: [build]
   workflow_dispatch: # 允许手动触发
-
+permissions:
+  contents: write
 env:
   # 工作目录（源码将放置在此）
   WORKSPACE: ${{ github.workspace }}
