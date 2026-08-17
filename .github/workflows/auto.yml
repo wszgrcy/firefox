@@ -1,0 +1,245 @@
+name: Build GeckoView for Android
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch: # 允许手动触发
+
+env:
+  # 工作目录（源码将放置在此）
+  WORKSPACE: ${{ github.workspace }}
+  # 构建目标
+  TARGET: x86_64-unknown-linux-android
+  # Mozilla 构建目录（后续自动生成）
+  MOZBUILD: ${{ github.workspace }}/.mozbuild
+  # JDK 17 路径（由 bootstrap 安装）
+  JAVA_HOME: ${{ github.workspace }}/.mozbuild/jdk/jdk-17.0.18+8
+  # NDK 路径
+  NDK_HOME: ${{ github.workspace }}/.mozbuild/android-ndk-r29
+  # 启用缓存
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: sccache
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
+      - name: Checkout gecko-dev
+        uses:
+          actions/checkout@v7
+
+          # 如需特定分支可指定 ref，例如 'refs/heads/release'
+
+      # 2. 安装系统依赖（bootstrap 也会安装，但部分基础工具需提前）
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            python3 \
+            python3-pip \
+            unzip \
+            wget \
+            curl \
+            git \
+            file
+
+      # 3. 设置缓存（ccache + sccache）
+      - name: Cache .mozbuild
+        id: cache-mozbuild
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.mozbuild
+            ~/.cargo
+          key: ${{ runner.os }}-mozbuild-${{ hashFiles('firefox/mozconfig') }}
+          restore-keys: |
+            ${{ runner.os }}-mozbuild-
+
+      - name: Cache sccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/sccache
+          key: ${{ runner.os }}-sccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-sccache-
+
+      # 4. 进入源码目录并执行 bootstrap（安装 Android SDK, NDK, JDK, Rust 等）
+      - name: Bootstrap toolchain
+        run: |
+          # 若缓存恢复，bootstrap 可能跳过已安装组件，但仍会确保环境完整
+          ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android"
+        env:
+          # 指定不交互
+          MOZ_AUTOMATION: 1
+
+      # 5. 配置 PATH（NDK 自带 make）
+      # - name: Set up PATH for NDK
+      #   run: |
+      #     echo "$HOME/.mozbuild/android-ndk-r29/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+      #     echo "$HOME/.mozbuild/jdk/jdk-17.0.18+8/bin" >> $GITHUB_PATH
+      #     # 启用 Rust/Cargo 环境
+      #     echo "source $HOME/.cargo/env" >> $GITHUB_ENV
+      #     # 设置 JAVA_HOME 环境变量
+      #     echo "JAVA_HOME=$HOME/.mozbuild/jdk/jdk-17.0.18+8" >> $GITHUB_ENV
+
+      # 6. 运行 configure
+      # - name: Configure build
+      #   run: |
+      #     cd firefox
+      #     ./mach configure
+      #   env:
+      #     # 确保使用 NDK 的 make
+      #     PATH: ${{ env.NDK_HOME }}/prebuilt/linux-x86_64/bin:${{ env.JAVA_HOME }}/bin:$PATH
+
+      # 7. 开始构建（重定向日志便于后续查看）
+      - name: Build GeckoView
+        run: |
+          # cd firefox
+          # 使用 nohup 后台运行并记录日志（前台也可，这里直接运行）
+          ./mach build
+        env:
+          PATH: ${{ env.NDK_HOME }}/prebuilt/linux-x86_64/bin:${{ env.JAVA_HOME }}/bin:$PATH
+          # 使用 sccache 加速（若已安装）
+          RUSTC_WRAPPER: sccache
+          SCCACHE_DIR: ~/.cache/sccache
+      - run: |
+          ls -l
+          ls -d obj-*
+      # 8. 验证产物
+      - name: Verify artifacts
+        run: |
+          # cd firefox
+          echo "=== AAR files ==="
+          find obj-* -name '*.aar' -type f
+          echo "=== Maven repository ==="
+          ls -la obj-*/gradle/maven/org/mozilla/geckoview/ || true
+          # 提取版本号（从 metadata.xml）
+          VERSION=$(find obj-*/gradle/maven/org/mozilla/geckoview -name 'maven-metadata.xml' -exec grep -oP '(?<=<version>)[^<]+' {} \; | head -1)
+          echo "GeckoView version: $VERSION"
+          echo "GV_VERSION=$VERSION" >> $GITHUB_ENV
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            /tmp/build.log
+            firefox/obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
+          tag_name: ${{ github.ref_name }}
+      # 9. 可选：创建下游测试项目并尝试构建 APK（验证消费）
+      - name: Build test app with GeckoView
+        run: |
+          mkdir test-dir
+          cd test-dir
+          # 创建测试项目目录
+          mkdir -p /tmp/gvtest/app/src/main
+          cd /tmp/gvtest
+
+          # 复制 Gradle wrapper（从 Firefox 源码复用）
+          mkdir -p gradle/wrapper
+          cp ${{ github.workspace }}/firefox/gradle/wrapper/gradle-wrapper.jar gradle/wrapper/
+          cp ${{ github.workspace }}/firefox/gradle/wrapper/gradle-wrapper.properties gradle/wrapper/
+          cp ${{ github.workspace }}/firefox/gradlew .
+          chmod +x gradlew
+
+          # 创建 settings.gradle
+          cat > settings.gradle <<'EOF'
+          rootProject.name = 'gvtest'
+          include ':app'
+          EOF
+
+          # 创建根 build.gradle
+          cat > build.gradle <<'EOF'
+          buildscript {
+              repositories { google(); mavenCentral() }
+              dependencies { classpath "com.android.tools.build:gradle:9.2.1" }
+          }
+          allprojects {
+              repositories {
+                  google()
+                  mavenCentral()
+                  maven { url "https://maven.mozilla.org/maven2/" }
+              }
+          }
+          EOF
+
+          # 创建 gradle.properties
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2g
+          android.useAndroidX=true
+          android.suppressUnsupportedCompileSdk=37.1
+          EOF
+
+          # 创建 local.properties（指向 SDK）
+          echo "sdk.dir=$HOME/.mozbuild/android-sdk-linux" > local.properties
+
+          # 创建 app/build.gradle（关键：应用替换脚本）
+          mkdir -p app/src/main
+          cat > app/build.gradle <<'EOF'
+          plugins { id 'com.android.application' }
+          android {
+              namespace 'org.example.gvtest'
+              compileSdkVersion "android-37.1"
+              defaultConfig {
+                  applicationId "org.example.gvtest"
+                  minSdk 26
+                  targetSdk 37
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+          ext.topsrcdir = '${{ github.workspace }}/firefox'
+          apply from: "${ext.topsrcdir}/substitute-local-geckoview.gradle"
+          dependencies {
+              implementation "org.mozilla.geckoview:geckoview-nightly:${{ env.GV_VERSION }}"
+          }
+          EOF
+
+          # 创建 AndroidManifest.xml
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <application android:label="gvtest"/>
+          </manifest>
+          EOF
+
+          # 构建 APK
+          export JAVA_HOME=$HOME/.mozbuild/jdk/jdk-17.0.18+8
+          export PATH=$JAVA_HOME/bin:$PATH
+          ./gradlew :app:assembleDebug --no-daemon
+
+          # 验证 APK 中包含 GeckoView 原生库
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          if [ -f "$APK" ]; then
+            echo "APK built successfully"
+            unzip -l "$APK" | grep -E '\.so$' | grep x86_64 || echo "No x86_64 .so found"
+            unzip -l "$APK" | grep 'omni.ja' && echo "omni.ja present"
+          else
+            echo "APK build failed" && exit 1
+          fi
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+          PATH: ${{ env.JAVA_HOME }}/bin:${{ env.NDK_HOME }}/prebuilt/linux-x86_64/bin:$PATH
+
+      # 10. 上传构建日志和产物（可选）
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build.log
+
+      - name: Upload AAR artifacts
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: geckoview-aar
+          path: firefox/obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
