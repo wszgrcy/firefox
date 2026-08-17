@@ -2,9 +2,9 @@ name: Build GeckoView for Android
 
 on:
   push:
-    branches: [main, master]
+    branches: [build]
   pull_request:
-    branches: [main, master]
+    branches: [build]
   workflow_dispatch: # 允许手动触发
 
 env:
