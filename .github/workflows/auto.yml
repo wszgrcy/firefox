@@ -27,12 +27,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
+      - name: Free Disk Space (Ubuntu)
+        uses: BRAINSia/free-disk-space@v2
+        with:
+          tool-cache: true
+          mandb: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
+        # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
       - name: Checkout gecko-dev
-        uses:
-          actions/checkout@v7
-
-          # 如需特定分支可指定 ref，例如 'refs/heads/release'
+        uses: actions/checkout@v7
 
       # 2. 安装系统依赖（bootstrap 也会安装，但部分基础工具需提前）
       - name: Install system dependencies
