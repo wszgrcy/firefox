@@ -32,27 +32,22 @@ jobs:
         uses: BRAINSia/free-disk-space@v2
         with:
           tool-cache: false
-          mandb: true
+          mandb: false
           android: false
           dotnet: true
           haskell: true
-          large-packages: true
+          large-packages: false
           docker-images: true
-          swap-storage: true
+          swap-storage: false
         # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
 
       # 2. 安装系统依赖（bootstrap 也会安装，但部分基础工具需提前）
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11" # 或指定具体版本，如 '3.11'
-      - run: |
-          type python
-          type python3
-          python --version
-          python3 --version
       - name: Install system dependencies
         run: |
           sudo apt update
