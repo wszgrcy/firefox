@@ -130,7 +130,7 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             /tmp/build.log
-            firefox/obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
+            obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
           tag_name: ${{ github.ref_name }}
       # 9. 可选：创建下游测试项目并尝试构建 APK（验证消费）
       - name: Build test app with GeckoView
@@ -143,9 +143,9 @@ jobs:
 
           # 复制 Gradle wrapper（从 Firefox 源码复用）
           mkdir -p gradle/wrapper
-          cp ${{ github.workspace }}/firefox/gradle/wrapper/gradle-wrapper.jar gradle/wrapper/
-          cp ${{ github.workspace }}/firefox/gradle/wrapper/gradle-wrapper.properties gradle/wrapper/
-          cp ${{ github.workspace }}/firefox/gradlew .
+          cp ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.jar gradle/wrapper/
+          cp ${{ github.workspace }}/gradle/wrapper/gradle-wrapper.properties gradle/wrapper/
+          cp ${{ github.workspace }}/gradlew .
           chmod +x gradlew
 
           # 创建 settings.gradle
@@ -242,4 +242,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: geckoview-aar
-          path: firefox/obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
+          path: obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
