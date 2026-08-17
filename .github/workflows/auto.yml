@@ -31,7 +31,7 @@ jobs:
       - name: Free Disk Space (Ubuntu)
         uses: BRAINSia/free-disk-space@v2
         with:
-          tool-cache: true
+          tool-cache: false
           mandb: true
           android: true
           dotnet: true
