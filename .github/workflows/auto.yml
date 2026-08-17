@@ -44,6 +44,15 @@ jobs:
         uses: actions/checkout@v7
 
       # 2. 安装系统依赖（bootstrap 也会安装，但部分基础工具需提前）
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11" # 或指定具体版本，如 '3.11'
+      - run: |
+          type python
+          type python3
+          python --version
+          python3 --version
       - name: Install system dependencies
         run: |
           sudo apt update
@@ -51,16 +60,12 @@ jobs:
             build-essential \
             cmake \
             ninja-build \
-            python3 \
-            python3-pip \
             unzip \
             wget \
             curl \
             git \
             file
-      - run: |
-          type python
-          python --version
+
       # 3. 设置缓存（ccache + sccache）
       - name: Cache .mozbuild
         id: cache-mozbuild
