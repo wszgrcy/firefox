@@ -119,11 +119,11 @@ jobs:
           # cd firefox
           # 使用 nohup 后台运行并记录日志（前台也可，这里直接运行）
           ./mach build
-        env:
-          PATH: ${{ env.NDK_HOME }}/prebuilt/linux-x86_64/bin:${{ env.JAVA_HOME }}/bin:$PATH
-          # 使用 sccache 加速（若已安装）
-          RUSTC_WRAPPER: sccache
-          SCCACHE_DIR: ~/.cache/sccache
+        # env:
+          # PATH: ${{ env.NDK_HOME }}/prebuilt/linux-x86_64/bin:${{ env.JAVA_HOME }}/bin:$PATH
+          # # 使用 sccache 加速（若已安装）
+          # RUSTC_WRAPPER: sccache
+          # SCCACHE_DIR: ~/.cache/sccache
       - run: |
           ls -l
           ls -d obj-*
