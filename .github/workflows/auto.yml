@@ -91,7 +91,7 @@ jobs:
           # 指定不交互
           MOZ_AUTOMATION: 1
       - run: |
-          ./mach doctor --verbose
+          ./mach doctor
           ls -lt
           cat mozconfig
       # 5. 配置 PATH（NDK 自带 make）
