@@ -19,9 +19,6 @@ env:
   JAVA_HOME: ${{ github.workspace }}/.mozbuild/jdk/jdk-17.0.18+8
   # NDK 路径
   NDK_HOME: ${{ github.workspace }}/.mozbuild/android-ndk-r29
-  # 启用缓存
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: sccache
 
 jobs:
   build:
@@ -62,25 +59,7 @@ jobs:
             git \
             file
 
-      # 3. 设置缓存（ccache + sccache）
-      # - name: Cache .mozbuild
-      #   id: cache-mozbuild
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: |
-      #       ~/.mozbuild
-      #       ~/.cargo
-      #     key: ${{ runner.os }}-mozbuild-${{ hashFiles('firefox/mozconfig') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-mozbuild-
 
-      # - name: Cache sccache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.cache/sccache
-      #     key: ${{ runner.os }}-sccache-${{ github.sha }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-sccache-
 
       # 4. 进入源码目录并执行 bootstrap（安装 Android SDK, NDK, JDK, Rust 等）
       - name: Bootstrap toolchain
@@ -117,13 +96,8 @@ jobs:
       - name: Build GeckoView
         run: |
           # cd firefox
-          # 使用 nohup 后台运行并记录日志（前台也可，这里直接运行）
           ./mach build
-        # env:
-          # PATH: ${{ env.NDK_HOME }}/prebuilt/linux-x86_64/bin:${{ env.JAVA_HOME }}/bin:$PATH
-          # # 使用 sccache 加速（若已安装）
-          # RUSTC_WRAPPER: sccache
-          # SCCACHE_DIR: ~/.cache/sccache
+
       - run: |
           ls -l
           ls -d obj-*
