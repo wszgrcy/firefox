@@ -63,24 +63,24 @@ jobs:
             file
 
       # 3. 设置缓存（ccache + sccache）
-      - name: Cache .mozbuild
-        id: cache-mozbuild
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.mozbuild
-            ~/.cargo
-          key: ${{ runner.os }}-mozbuild-${{ hashFiles('firefox/mozconfig') }}
-          restore-keys: |
-            ${{ runner.os }}-mozbuild-
+      # - name: Cache .mozbuild
+      #   id: cache-mozbuild
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: |
+      #       ~/.mozbuild
+      #       ~/.cargo
+      #     key: ${{ runner.os }}-mozbuild-${{ hashFiles('firefox/mozconfig') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-mozbuild-
 
-      - name: Cache sccache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/sccache
-          key: ${{ runner.os }}-sccache-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-sccache-
+      # - name: Cache sccache
+      #   uses: actions/cache@v4
+      #   with:
+      #     path: ~/.cache/sccache
+      #     key: ${{ runner.os }}-sccache-${{ github.sha }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-sccache-
 
       # 4. 进入源码目录并执行 bootstrap（安装 Android SDK, NDK, JDK, Rust 等）
       - name: Bootstrap toolchain
