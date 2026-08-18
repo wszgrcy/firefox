@@ -25,20 +25,21 @@ env:
 
 jobs:
   build:
-    runs-on: ff-linux
+    runs-on: ubuntu-latest
+    # runs-on: ff-linux
 
     steps:
-      # - name: Free Disk Space (Ubuntu)
-      #   uses: BRAINSia/free-disk-space@v2
-      #   with:
-      #     tool-cache: true
-      #     mandb: true
-      #     android: true
-      #     dotnet: true
-      #     haskell: true
-      #     large-packages: false
-      #     docker-images: true
-      #     swap-storage: true
+      - name: Free Disk Space (Ubuntu)
+        uses: BRAINSia/free-disk-space@v2
+        with:
+          tool-cache: true
+          mandb: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: true
         # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
@@ -89,7 +90,8 @@ jobs:
         env:
           # 指定不交互
           MOZ_AUTOMATION: 1
-
+      - run: |
+          ./mach doctor --verbose
       # 5. 配置 PATH（NDK 自带 make）
       # - name: Set up PATH for NDK
       #   run: |
