@@ -25,20 +25,20 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ff-linux
 
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: BRAINSia/free-disk-space@v2
-        with:
-          tool-cache: false
-          mandb: false
-          android: false
-          dotnet: true
-          haskell: true
-          large-packages: false
-          docker-images: true
-          swap-storage: false
+      # - name: Free Disk Space (Ubuntu)
+      #   uses: BRAINSia/free-disk-space@v2
+      #   with:
+      #     tool-cache: true
+      #     mandb: true
+      #     android: true
+      #     dotnet: true
+      #     haskell: true
+      #     large-packages: false
+      #     docker-images: true
+      #     swap-storage: true
         # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
@@ -140,7 +140,7 @@ jobs:
         with:
           fail_on_unmatched_files: true
           files: |
-            /tmp/build.log
+            # /tmp/build.log
             obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
           tag_name: ${{ github.ref_name }}
       # 9. 可选：创建下游测试项目并尝试构建 APK（验证消费）
