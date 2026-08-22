@@ -6,9 +6,9 @@ on:
   pull_request:
     branches: [build]
   workflow_dispatch: # 允许手动触发
+
 permissions:
   contents: write
-
 
 jobs:
   build:
@@ -25,14 +25,12 @@ jobs:
           large-packages: false
           docker-images: true
           swap-storage: true
-        # 1. 检出 Gecko 源码（使用浅克隆以减小体积）
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
-      # 2. 安装系统依赖（bootstrap 也会安装，但部分基础工具需提前）
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.11" # 或指定具体版本，如 '3.11'
+          python-version: "3.11"
       - name: Install system dependencies
         run: |
           sudo apt update
@@ -46,7 +44,6 @@ jobs:
             file
       - name: Bootstrap toolchain
         run: |
-          # 若缓存恢复，bootstrap 可能跳过已安装组件，但仍会确保环境完整
           ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android"
         env:
           MOZ_AUTOMATION: 1
@@ -59,16 +56,26 @@ jobs:
       - run: |
           ls -l
           ls -d obj-*
+
+      - name: Rename AAR to include -x86
+        run: |
+          for f in obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar; do
+            if [ -f "$f" ]; then
+              mv "$f" "${f%.aar}-x86.aar"
+            fi
+          done
+
       - name: Release
         uses: softprops/action-gh-release@v3
         with:
           fail_on_unmatched_files: true
           files: |
-            obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
+            obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*-x86.aar
           tag_name: ${{ github.ref_name }}
+
       - name: Upload AAR artifacts
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: geckoview-aar
-          path: obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*.aar
+          path: obj-*/gradle/build/mobile/android/geckoview/outputs/aar/*-x86.aar
