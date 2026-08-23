@@ -10,6 +10,8 @@ UNIFIED_SOURCES += [
     "GeckoViewExternalAppService.cpp",
     "GeckoViewInputStream.cpp",
     "GeckoViewOutputStream.cpp",
+    "GeckoViewRequestInterceptorController.cpp",
+    "GeckoViewRequestInterceptorObserver.cpp",
     "GeckoViewStreamListener.cpp",
 ]
 
@@ -19,6 +21,8 @@ EXPORTS += [
     "GeckoViewExternalAppService.h",
     "GeckoViewInputStream.h",
     "GeckoViewOutputStream.h",
+    "GeckoViewRequestInterceptorController.h",
+    "GeckoViewRequestInterceptorObserver.h",
     "GeckoViewStreamListener.h",
 ]
 

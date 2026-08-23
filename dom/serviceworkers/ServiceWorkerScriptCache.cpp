@@ -4,6 +4,10 @@
 
 #include "ServiceWorkerScriptCache.h"
 
+#ifdef ANDROID
+#  include <android/log.h>
+#endif
+
 #include "ServiceWorkerManager.h"
 #include "js/Array.h"               // JS::GetArrayLength
 #include "js/PropertyAndElement.h"  // JS_GetElement
@@ -891,6 +895,14 @@ CompareNetwork::OnStreamComplete(nsIStreamLoader* aLoader,
   nsresult rv = NS_ERROR_FAILURE;
   auto guard = MakeScopeExit([&] { NetworkFinish(rv); });
 
+#ifdef ANDROID
+  __android_log_print(ANDROID_LOG_DEBUG, "GVRInterceptor",
+                      "CompareNetwork::OnStreamComplete isMain=%d aLen=%u "
+                      "aStatus=%x url=%s",
+                      (int)mIsMainScript, aLen, (unsigned)aStatus,
+                      mURL.get());
+#endif
+
   if (aLen > GetWorkerScriptMaxSizeInBytes()) {
     rv = NS_ERROR_DOM_ABORT_ERR;  // This will make sure an exception gets
                                   // thrown to the global.
@@ -1039,6 +1051,7 @@ CompareNetwork::OnStreamComplete(nsIStreamLoader* aLoader,
 
   bool requestSucceeded;
   rv = httpChannel->GetRequestSucceeded(&requestSucceeded);
+
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return NS_OK;
   }

@@ -2483,6 +2483,35 @@ bool ServiceWorkerManager::IsAvailable(nsIPrincipal* aPrincipal, nsIURI* aURI,
   return true;
 }
 
+bool ServiceWorkerManager::ForceControlClient(nsIPrincipal* aPrincipal,
+                                              nsIURI* aURI,
+                                              nsILoadInfo* aLoadInfo) {
+  MOZ_ASSERT(aPrincipal);
+  MOZ_ASSERT(aURI);
+  MOZ_ASSERT(aLoadInfo);
+
+  RefPtr<ServiceWorkerRegistrationInfo> registration =
+      GetServiceWorkerRegistrationInfo(aPrincipal, aURI);
+  if (!registration || !registration->GetActive()) {
+    return false;
+  }
+
+  Maybe<ClientInfo> clientInfo = aLoadInfo->GetReservedClientInfo();
+  if (clientInfo.isNothing()) {
+    clientInfo = aLoadInfo->GetInitialClientInfo();
+  }
+  if (clientInfo.isNothing()) {
+    return false;
+  }
+
+  // Track the client as controlled in the manager so that subresource fetch
+  // events can be dispatched. The client handle controller itself is set from
+  // the LoadInfo controller when the document loads.
+  StartControllingClient(clientInfo.ref(), registration, false);
+  aLoadInfo->SetController(registration->GetActive()->Descriptor());
+  return true;
+}
+
 nsresult ServiceWorkerManager::GetClientRegistration(
     const ClientInfo& aClientInfo,
     ServiceWorkerRegistrationInfo** aRegistrationInfo) {

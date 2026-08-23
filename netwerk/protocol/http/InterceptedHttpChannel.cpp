@@ -6,6 +6,9 @@
 
 #include "NetworkMarker.h"
 #include "mozilla/Logging.h"
+#ifdef ANDROID
+#  include <android/log.h>
+#endif
 #include "mozilla/SchedulerGroup.h"
 #include "mozilla/ScopeExit.h"
 #include "mozilla/dom/ChannelInfo.h"
@@ -516,6 +519,11 @@ InterceptedHttpChannel::CancelWithReason(nsresult aStatus,
 NS_IMETHODIMP
 InterceptedHttpChannel::Cancel(nsresult aStatus) {
   INTERCEPTED_LOG(("InterceptedHttpChannel::Cancel [%p]", this));
+#ifdef ANDROID
+  __android_log_print(ANDROID_LOG_DEBUG, "GVRInterceptor",
+                      "InterceptedHttpChannel::Cancel channel=%p status=%x",
+                      this, (uint32_t)(nsresult)aStatus);
+#endif
   // Note: This class has been designed to send all error results through
   //       Cancel().  Don't add calls directly to AsyncAbort() or
   //       DoNotifyListener().  Instead call Cancel().
@@ -1244,6 +1252,12 @@ InterceptedHttpChannel::OnStopRequest(nsIRequest* aRequest, nsresult aStatus) {
   }
 
   nsresult rv = NS_OK;
+#ifdef ANDROID
+  __android_log_print(ANDROID_LOG_DEBUG, "GVRInterceptor",
+                      "InterceptedHttpChannel::OnStopRequest channel=%p "
+                      "reportedStatus=%x",
+                      this, (uint32_t)(nsresult)mStatus);
+#endif
   if (mListener) {
     nsCOMPtr<nsIStreamListener> listener(mListener);
     rv = listener->OnStopRequest(this, mStatus);

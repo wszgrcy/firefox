@@ -10,6 +10,10 @@
 #include "nsProxyRelease.h"
 #include "nsThreadUtils.h"
 
+#ifdef ANDROID
+#  include <android/log.h>
+#endif
+
 namespace mozilla::dom {
 
 ServiceWorkerJob::Type ServiceWorkerJob::GetType() const { return mType; }
@@ -170,6 +174,15 @@ void ServiceWorkerJob::Finish(ErrorResult& aRv) {
 
   // Ensure that we only surface SecurityErr, TypeErr or InvalidStateErr to
   // script.
+#ifdef ANDROID
+  if (aRv.Failed()) {
+    __android_log_print(ANDROID_LOG_DEBUG, "GVRInterceptor",
+                        "ServiceWorkerJob::Finish script=%s scope=%s "
+                        "realError=%x",
+                        mScriptSpec.get(), mScope.get(),
+                        (unsigned)aRv.ErrorCodeAsInt());
+  }
+#endif
   if (aRv.Failed() && !aRv.ErrorCodeIs(NS_ERROR_DOM_SECURITY_ERR) &&
       !aRv.ErrorCodeIs(NS_ERROR_INTERNAL_ERRORRESULT_TYPEERROR) &&
       !aRv.ErrorCodeIs(NS_ERROR_DOM_INVALID_STATE_ERR)) {

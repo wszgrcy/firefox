@@ -3,6 +3,7 @@ plugins {
     id 'org.mozilla.apilint'
     id 'checkstyle'
     id 'maven-publish'
+    id 'signing'
 }
 
 import groovy.json.JsonOutput
@@ -170,7 +171,7 @@ configurations {
             }
             afterEvaluate {
                 // Implicit capability
-                capability("org.mozilla.geckoview:${computeArtifactId()}:${gleanVersion}")
+                capability("io.github.wszgrcy:${computeArtifactId()}:${version}")
             }
         }
     }
@@ -374,7 +375,8 @@ afterEvaluate {
     }
 }
 
-version = getVersionNumber()
+// Prefer the version from the environment variable, falling back to the computed version.
+version = System.getenv('GECKOVIEW_VERSION') ?: getVersionNumber()
 println("GeckoView version = " + version)
 group = 'org.mozilla.geckoview'
 
@@ -398,6 +400,9 @@ def computeArtifactId() {
     return id
 }
 
+
+def isProd = System.getenv('IS_PROD') == '1'
+
 publishing {
     repositories {
         maven {
@@ -411,10 +416,19 @@ afterEvaluate {
     publishing.publications.create('debug', MavenPublication) {
         from components.debug
         artifactId = computeArtifactId()
-
+        groupId = 'io.github.wszgrcy'
         pom {
             url = 'https://geckoview.dev'
-
+            name = 'geckoview-custom-x86_64'
+            description = 'GeckoView Custom for Android'
+            developers {
+                    developer {
+                        id = 'wszgrcy'
+                        name = 'chen'
+                        email = 'wszgrcy@gmail.com'
+                    }
+                }
+            
             licenses {
                 license {
                     name = 'The Mozilla Public License, v. 2.0'
@@ -426,9 +440,8 @@ afterEvaluate {
             scm {
                 if (gradle.mozconfig.substs.MOZ_INCLUDE_SOURCE_INFO) {
                     // URL is like "https://hg.mozilla.org/mozilla-central/rev/1e64b8a0c546a49459d404aaf930d5b1f621246a".
-                    connection = "scm:hg:${gradle.mozconfig.source_repo.MOZ_SOURCE_REPO}"
-                    url = gradle.mozconfig.source_repo.MOZ_SOURCE_URL
-                    tag = gradle.mozconfig.source_repo.MOZ_SOURCE_STAMP
+                    connection = 'scm:git:https://github.com/wszgrcy/firefox.git'
+                    url = 'https://github.com/wszgrcy/firefox'
                 } else {
                     // Default to mozilla-central.
                     connection = 'scm:hg:https://hg.mozilla.org/mozilla-central/'
@@ -440,6 +453,22 @@ afterEvaluate {
         // Javadoc and sources for developer ergononomics.
         artifact tasks.named("javadocJarDebug")
         artifact tasks.named("sourcesJarDebug")
+    }
+
+    if (isProd) {
+        signing {
+            def keyId = project.findProperty('signingKeyId') ?: System.getenv('GPG_KEY_ID')
+            def encodedKey = project.findProperty('signingKeyBase64') ?: System.getenv('GPG_KEY_BASE64')
+            def password = project.findProperty('signingPassword') ?: System.getenv('GPG_PASSPHRASE')
+            def decodedKey = encodedKey != null ? new String(encodedKey.decodeBase64()) : null
+
+            if (keyId && decodedKey && password) {
+                useInMemoryPgpKeys(keyId, decodedKey, password)
+                sign(publishing.publications.debug)
+            } else {
+                throw new GradleException("Central publishing requires GPG_KEY_ID, GPG_KEY_BASE64 and GPG_PASSPHRASE to be set")
+            }
+        }
     }
 }
 

@@ -388,6 +388,16 @@ class ServiceWorkerManager final : public nsIServiceWorkerManager,
   GetServiceWorkerRegistrationInfo(nsIPrincipal* aPrincipal,
                                    nsIURI* aURI) const;
 
+ public:
+  // Force a navigation to be controlled by the active service worker matching
+  // the given scope. Marks the LoadInfo and the navigation's client as
+  // controlled so that subresources of the loaded page are intercepted by the
+  // service worker. Returns true if the navigation was marked as controlled.
+  bool ForceControlClient(nsIPrincipal* aPrincipal, nsIURI* aURI,
+                          nsILoadInfo* aLoadInfo);
+
+ private:
+
   // Find the ServiceWorkerRegistration whose scope best matches the provided
   // URL for the origin encoded as a scope key that has been obtained from
   // PrincipToScopeKey.

@@ -29,6 +29,20 @@ import org.mozilla.gecko.annotation.WrapForJNI;
   private int mSize;
 
   /**
+   * Create a {@link GeckoViewInputStream} wrapping the given {@link InputStream}. Called by native
+   * code to serve the body of an intercepted {@link WebResponse}.
+   *
+   * @param is the {@link InputStream} to wrap.
+   * @return a new {@link GeckoViewInputStream}.
+   */
+  @WrapForJNI
+  public static @NonNull GeckoViewInputStream create(final @NonNull InputStream is) {
+    final GeckoViewInputStream stream = new GeckoViewInputStream();
+    stream.setInputStream(is);
+    return stream;
+  }
+
+  /**
    * Set an input stream.
    *
    * @param is the {@link InputStream} to set.

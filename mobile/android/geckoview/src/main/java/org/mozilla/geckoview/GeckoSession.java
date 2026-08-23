@@ -1401,6 +1401,32 @@ public class GeckoSession {
   }
 
   /**
+   * Set the {@link RequestInterceptor} queried by native Gecko for every http/https request. The
+   * interceptor is process-global.
+   *
+   * <p>When an interceptor returns a {@link WebResponse} from {@link
+   * RequestInterceptor#interceptRequest}, Gecko serves its body while keeping the request URI
+   * unchanged.
+   *
+   * @param interceptor the interceptor, or {@code null} to disable request interception.
+   */
+  @AnyThread
+  public static void setRequestInterceptor(
+      final @Nullable RequestInterceptor interceptor) {
+    GeckoViewRequestInterceptor.setInterceptor(interceptor);
+  }
+
+  /**
+   * Get the currently registered {@link RequestInterceptor}, or {@code null} if none.
+   *
+   * @return the {@link RequestInterceptor} or {@code null}.
+   */
+  @AnyThread
+  public static @Nullable RequestInterceptor getRequestInterceptor() {
+    return GeckoViewRequestInterceptor.getInterceptor();
+  }
+
+  /**
    * Get the current permission delegate for this GeckoSession.
    *
    * @return PermissionDelegate instance or null if using default delegate.
@@ -4885,6 +4911,33 @@ public class GeckoSession {
         @NonNull final WebRequestError error) {
       return null;
     }
+  }
+
+  /**
+   * GeckoSession applications implement this interface to intercept http/https requests and serve
+   * custom content, in the spirit of Android {@code WebViewClient.shouldInterceptRequest}.
+   *
+   * <p>Unlike a redirect, the original request URI is preserved unchanged, so service workers and
+   * same-origin checks keep working.
+   *
+   * <p>The interceptor is global for the process: it is queried by native Gecko for every http/https
+   * channel, including subresources, XHR/fetch and {@code sw.js}. Register it with {@link
+   * GeckoSession#setRequestInterceptor(RequestInterceptor)}.
+   */
+  public interface RequestInterceptor {
+    /**
+     * Invoked by native Gecko for each http/https request.
+     *
+     * @param uri The request URI (http/https), unchanged.
+     * @param method The HTTP method, e.g. {@code "GET"}.
+     * @param headers The request headers as key/value pairs, or {@code null}.
+     * @return A {@link WebResponse} whose {@link WebResponse#body} will be served as the response
+     *     body while keeping {@code uri} unchanged, or {@code null} to let Gecko handle the
+     *     request normally.
+     */
+    @AnyThread
+    @Nullable WebResponse interceptRequest(
+        @NonNull String uri, @NonNull String method, @Nullable String[] headers);
   }
 
   /** Target window type definitions for navigation target. */

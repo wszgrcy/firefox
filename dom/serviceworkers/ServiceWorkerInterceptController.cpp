@@ -20,6 +20,15 @@
 #include "nsIPrincipal.h"
 #include "nsQueryObject.h"
 
+#ifdef ANDROID
+#  include <android/log.h>
+#  define GVR_SW_DEBUG(...) \
+  __android_log_print(ANDROID_LOG_DEBUG, "GVRInterceptor", __VA_ARGS__)
+#else
+#  define GVR_SW_DEBUG(...) \
+  do { } while (0)
+#endif
+
 namespace mozilla::dom {
 
 namespace {
@@ -65,11 +74,16 @@ ServiceWorkerInterceptController::ShouldPrepareForIntercept(
         loadInfo->GetController();
 
     // If the controller doesn't handle fetch events, return false
+    GVR_SW_DEBUG("SW subresource decision: controller.isSome()=%d",
+                 controller.isSome());
     if (!controller.isSome()) {
       return NS_OK;
     }
 
     *aShouldIntercept = controller.ref().HandlesFetch();
+    GVR_SW_DEBUG("SW subresource decision: shouldIntercept=%d handlesFetch=%d",
+                 (int)*aShouldIntercept,
+                 (int)controller.ref().HandlesFetch());
 
     // The service worker has no fetch event handler, try to schedule a
     // soft-update through ServiceWorkerRegistrationInfo.
@@ -119,7 +133,10 @@ ServiceWorkerInterceptController::ShouldPrepareForIntercept(
   NS_ENSURE_SUCCESS(rv, rv);
 
   // First check with the ServiceWorkerManager for a matching service worker.
-  if (!swm || !swm->IsAvailable(principal, aURI, aChannel)) {
+  bool available = swm && swm->IsAvailable(principal, aURI, aChannel);
+  GVR_SW_DEBUG("SW navigation decision: isSubresource=0 available=%d",
+               (int)available);
+  if (!available) {
     return NS_OK;
   }
 
