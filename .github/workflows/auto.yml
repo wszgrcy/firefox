@@ -19,6 +19,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 16
+      - run: |
+          free -lh
       - name: Free Disk Space (Ubuntu)
         uses: BRAINSia/free-disk-space@v2
         with:
