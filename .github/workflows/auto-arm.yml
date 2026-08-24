@@ -31,10 +31,10 @@ jobs:
       #     swap-storage: true
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
+      # - name: Setup Python
+      #   uses: actions/setup-python@v7
+      #   with:
+      #     python-version: "3.11"
       - name: Install system dependencies
         run: |
           sudo apt update
@@ -46,7 +46,8 @@ jobs:
             wget \
             curl \
             git \
-            file
+            file \
+            python3
       - name: Bootstrap toolchain
         run: |
           ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android"
