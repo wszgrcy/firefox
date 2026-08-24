@@ -34,9 +34,7 @@ jobs:
       #   uses: actions/setup-python@v7
       #   with:
       #     python-version: "3.11"
-      - run: |
-          type zip
-          type curl
+
       - name: Install system dependencies
         run: |
           sudo apt update && sudo apt install -y curl python3 python3-venv git make zip curl
