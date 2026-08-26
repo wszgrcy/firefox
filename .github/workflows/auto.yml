@@ -11,7 +11,7 @@ permissions:
   contents: write
 env:
   IS_PROD: 1
-  GECKOVIEW_VERSION: 156.0.13
+  GECKOVIEW_VERSION: 156.0.20
   GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
   GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
   GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -68,9 +68,10 @@ jobs:
           cat > mozconfig <<EOF
           ac_add_options --enable-project=mobile/android
           ac_add_options MOZILLA_OFFICIAL=1
-          ac_add_options --enable-update-channel=release
           ac_add_options --enable-optimize
           ac_add_options --disable-debug
+          ac_add_options --enable-update-channel=custom
+          ac_add_options --enable-geckoview-lite
           EOF
           # （可选）显示内容以验证
           cat mozconfig
@@ -80,22 +81,22 @@ jobs:
       - name: Create Maven bundle zip
         run: |
           cd obj-x86_64-unknown-linux-android/gradle/maven
-          zip -r ${{ github.workspace }}/central-bundle.zip io
-
+          zip -r ${{ github.workspace }}/central-bundle-x86.zip io
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            central-bundle-x86.zip
+          tag_name: ${{ env.GECKOVIEW_VERSION }}
       - name: Upload to Sonatype Central
         run: |
           curl --request POST \
             --verbose \
             --header 'Authorization: Bearer ${{ secrets.SONATYPE_TOKEN }}' \
-            --form bundle=@central-bundle.zip \
+            --form bundle=@central-bundle-x86.zip \
             https://central.sonatype.com/api/v1/publisher/upload
 
 
-      - name: Rename AAR to include -x86
-        run: |
-          for f in obj-x86_64-unknown-linux-android/gradle/build/mobile/android/geckoview/outputs/aar/*.aar; do
-              if [ -f "$f" ]; then
-                  mv "$f" "${f%.aar}-x86.aar"
-              fi
-          done
+
 
