@@ -1,4 +1,4 @@
-name: Build GeckoView for Android
+name: Build GeckoView for Android Arm64
 
 on:
   push:
