@@ -1,0 +1,84 @@
+name: Build Slim GeckoView for Android Arm64
+
+on:
+  push:
+    branches: [build]
+  pull_request:
+    branches: [build]
+  workflow_dispatch: # 允许手动触发
+
+permissions:
+  contents: write
+env:
+  IS_PROD: 1
+  GECKOVIEW_VERSION: 156.0.21
+  GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+  GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
+  GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+jobs:
+  Android-Arm64-Shim:
+    runs-on: ff-linux
+    steps:
+      - name: Install system dependencies
+        run: |
+          sudo apt update && sudo apt install -y curl python3 python3-venv git make zip curl
+      - name: Checkout gecko-dev
+        uses: actions/checkout@v7
+      - name: Apply slim patch
+        run: |
+          # 应用裁剪 patch:移除 pdfjs/ml/HLS,裁剪 WebRTC 测试
+          git apply build-patch/slim.patch
+          git diff --stat
+      - name: Bootstrap toolchain
+        run: |
+          ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android"
+        env:
+          MOZ_AUTOMATION: 1
+      - run: |
+          ./mach doctor
+      - name: Setup mozconfig
+        run: |
+          # 使用 > 覆盖写入，包含裁剪选项
+          cat > mozconfig <<EOF
+          ac_add_options --enable-project=mobile/android
+          ac_add_options --target=aarch64
+          ac_add_options MOZILLA_OFFICIAL=1
+          ac_add_options --enable-optimize
+          ac_add_options --disable-debug
+          ac_add_options --enable-update-channel=shim
+          ac_add_options --enable-geckoview-lite
+          ac_add_options --enable-lto
+          ac_add_options --as-milestone=release
+          ac_add_options --disable-webrtc
+          ac_add_options --disable-webspeech
+          ac_add_options --disable-jxl
+          ac_add_options --disable-universalchardet
+          ac_add_options --disable-zipwriter
+          ac_add_options --disable-crashreporter
+          ac_add_options --disable-webdriver
+          ac_add_options --disable-backgroundtasks
+          ac_add_options --disable-negotiateauth
+          EOF
+          cat mozconfig
+
+      - name: Build GeckoView
+        run: |
+          ./mach build
+      - name: Create Maven bundle zip
+        run: |
+          cd obj-aarch64-unknown-linux-android/gradle/maven
+          zip -r ${{ github.workspace }}/central-bundle-arm64-slim.zip io
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          fail_on_unmatched_files: true
+          files: |
+            central-bundle-arm64-slim.zip
+          tag_name: ${{ env.GECKOVIEW_VERSION }}
+      - name: Upload to Sonatype Central
+        run: |
+          curl --request POST \
+            --verbose \
+            --header 'Authorization: Bearer ${{ secrets.SONATYPE_TOKEN }}' \
+            --form bundle=@central-bundle-arm64-slim.zip \
+            https://central.sonatype.com/api/v1/publisher/upload

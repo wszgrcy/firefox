@@ -1,0 +1,73 @@
+diff --git a/mobile/android/geckoview/build.gradle b/mobile/android/geckoview/build.gradle
+index 94f44acf91bd..bb9fd4a2f2ed 100644
+--- a/mobile/android/geckoview/build.gradle
++++ b/mobile/android/geckoview/build.gradle
+@@ -146,6 +146,23 @@ android {
+                 manifest.srcFile "${topobjdir}/mobile/android/geckoview/src/main/AndroidManifest_overlay.xml"
+             }
+         }
++
++        androidTest {
++            java {
++                // VideoCaptureTest.kt depends on WebRTC classes, so exclude it
++                // when WebRTC is disabled.
++                if (!mozconfig.substs.MOZ_WEBRTC) {
++                    exclude 'org/mozilla/geckoview/test/VideoCaptureTest.kt'
++                }
++            }
++            if (!mozconfig.substs.MOZ_WEBRTC) {
++                // Kotlin files are collected separately from the java source set,
++                // so also exclude it from the kotlin source set.
++                kotlin {
++                    exclude 'org/mozilla/geckoview/test/VideoCaptureTest.kt'
++                }
++            }
++        }
+     }
+ 
+     buildFeatures {
+diff --git a/mobile/android/installer/package-manifest.in b/mobile/android/installer/package-manifest.in
+index b16d2c3df257..4cee6b2e9517 100644
+--- a/mobile/android/installer/package-manifest.in
++++ b/mobile/android/installer/package-manifest.in
+@@ -108,9 +108,6 @@
+ @BINPATH@/actors/*
+ 
+ ; [Browser Chrome Files]
+-@BINPATH@/chrome/pdfjs.manifest
+-@BINPATH@/chrome/pdfjs/*
+-@BINPATH@/defaults/pref/PdfJsDefaultPrefs.js
+ @BINPATH@/chrome/toolkit@JAREXT@
+ @BINPATH@/chrome/toolkit.manifest
+ 
+diff --git a/mobile/android/moz.configure b/mobile/android/moz.configure
+index 79a1b7c25bee..bcf635c092d8 100644
+--- a/mobile/android/moz.configure
++++ b/mobile/android/moz.configure
+@@ -11,7 +11,7 @@ project_flag(
+ project_flag(
+     "MOZ_ANDROID_HLS_SUPPORT",
+     help="Enable HLS (HTTP Live Streaming) support (currently using the ExoPlayer library)",
+-    default=True,
++    default=False,
+ )
+ 
+ option(
+diff --git a/toolkit/components/moz.build b/toolkit/components/moz.build
+index 0a11cad87db6..6fa3b082a04e 100644
+--- a/toolkit/components/moz.build
++++ b/toolkit/components/moz.build
+@@ -56,13 +56,11 @@ DIRS += [
+     "kvstore",
+     "media",
+     "mediasniffer",
+-    "ml",
+     "mozintl",
+     "mozprotocol",
+     "pageextractor",
+     "parentalcontrols",
+     "passwordmgr",
+-    "pdfjs",
+     "places",
+     "processtools",
+     "processsingleton",
