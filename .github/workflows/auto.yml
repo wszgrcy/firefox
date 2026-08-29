@@ -3,20 +3,20 @@ name: Build GeckoView for Android
 on:
   push:
     branches: [build]
-  pull_request:
-    branches: [build]
+    paths:
+      - '.github/workflows/auto.yml'
   workflow_dispatch: # 允许手动触发
 
 permissions:
   contents: write
 env:
   IS_PROD: 1
-  GECKOVIEW_VERSION: 156.0.20
+  GECKOVIEW_VERSION: 156.0.22
   GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
   GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
   GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 jobs:
-  build:
+  Android-X86_64:
     runs-on: ubuntu-26.04
     steps:
       - name: Set Swap Space
