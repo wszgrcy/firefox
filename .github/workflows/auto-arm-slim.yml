@@ -40,7 +40,7 @@ jobs:
           python-version: "3.11"
       - name: Install system dependencies
         run: |
-          sudo apt update && sudo apt install -y curl git make zip curl
+          sudo apt update && sudo apt install -y build-essential curl git make zip
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
       - name: Apply slim patch
