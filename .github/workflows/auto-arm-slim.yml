@@ -17,30 +17,32 @@ env:
   GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 jobs:
   Android-Arm64-Shim:
-    runs-on: ubuntu-26.04
+    runs-on: ff-linux
     steps:
-      - name: Free Disk Space (Ubuntu)
-        uses: BRAINSia/free-disk-space@v2
-        with:
-          tool-cache: true
-          mandb: true
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: false
-          docker-images: true
-          swap-storage: true
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
-        with:
-          swap-size-gb: 16
-      - name: Setup Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
+      # - name: Free Disk Space (Ubuntu)
+      #   uses: BRAINSia/free-disk-space@v2
+      #   with:
+      #     tool-cache: true
+      #     mandb: true
+      #     android: true
+      #     dotnet: true
+      #     haskell: true
+      #     large-packages: false
+      #     docker-images: true
+      #     swap-storage: true
+      # - name: Set Swap Space
+      #   uses: pierotofy/set-swap-space@master
+      #   with:
+      #     swap-size-gb: 16
+      # - name: Setup Python
+      #   uses: actions/setup-python@v7
+      #   with:
+      #     python-version: "3.11"
+      - run: |
+          ls -lh
       - name: Install system dependencies
         run: |
-          sudo apt update && sudo apt install -y build-essential curl git make zip
+          sudo apt update && sudo apt install -y build-essential curl python3 python3-venv git make zip
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
       - name: Apply slim patch
