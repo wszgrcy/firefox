@@ -50,7 +50,7 @@ jobs:
           rm -rf ~/.cargo
       - name: Install system dependencies
         run: |
-          sudo apt update && sudo apt install -y build-essential curl python3 python3-venv git make zip
+          sudo apt update && sudo apt install -y curl python3 python3-venv git make zip
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
       - name: Apply slim patch
