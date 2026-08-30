@@ -87,6 +87,7 @@ jobs:
           ac_add_options --disable-webdriver
           ac_add_options --disable-backgroundtasks
           ac_add_options --disable-negotiateauth
+          ac_add_options --enable-bootstrap
           EOF
           cat mozconfig
 
