@@ -19,10 +19,7 @@ jobs:
   Android-X86_64:
     runs-on: ubuntu-26.04
     steps:
-      - name: Set Swap Space
-        uses: pierotofy/set-swap-space@master
-        with:
-          swap-size-gb: 24
+      
       - run: |
           free -lh
       - name: Free Disk Space (Ubuntu)
@@ -36,6 +33,10 @@ jobs:
           large-packages: false
           docker-images: true
           swap-storage: true
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 24
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
       - name: Setup Python
