@@ -11,46 +11,47 @@ permissions:
   contents: write
 env:
   IS_PROD: 1
-  GECKOVIEW_VERSION: 156.0.22
+  GECKOVIEW_VERSION: 156.0.24
   GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
   GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
   GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 jobs:
   Android-Arm64-Shim:
-    runs-on: ff-linux
+    runs-on: ubuntu-26.04
     steps:
-      # - name: Free Disk Space (Ubuntu)
-      #   uses: BRAINSia/free-disk-space@v2
-      #   with:
-      #     tool-cache: true
-      #     mandb: true
-      #     android: true
-      #     dotnet: true
-      #     haskell: true
-      #     large-packages: false
-      #     docker-images: true
-      #     swap-storage: true
-      # - name: Set Swap Space
-      #   uses: pierotofy/set-swap-space@master
-      #   with:
-      #     swap-size-gb: 16
-      # - name: Setup Python
-      #   uses: actions/setup-python@v7
-      #   with:
-      #     python-version: "3.11"
-      - run: |
-          ls -lh
-          echo "---test---"
-          ls -lha ~
-          rm -rf ~/.mozbuild
-          rm -rf ~/.android
-          rm -rf ~/.gradle
-          rm -rf ~/.cache
-          rm -rf ~/.rustup
-          rm -rf ~/.cargo
+      - name: Free Disk Space (Ubuntu)
+        uses: BRAINSia/free-disk-space@v2
+        with:
+          tool-cache: true
+          mandb: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          docker-images: true
+          swap-storage: true
+      - name: Set Swap Space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 24
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+      # - run: |
+      #     ls -lh
+      #     echo "---test---"
+      #     ls -lha ~
+      #     rm -rf ~/.mozbuild
+      #     rm -rf ~/.android
+      #     rm -rf ~/.gradle
+      #     rm -rf ~/.cache
+      #     rm -rf ~/.rustup
+      #     rm -rf ~/.cargo
       - name: Install system dependencies
         run: |
-          sudo apt update && sudo apt install -y curl python3 python3-venv git make zip
+          sudo apt update
+          sudo apt install -y curl python3 python3-venv git make zip
       - name: Checkout gecko-dev
         uses: actions/checkout@v7
       - name: Apply slim patch

@@ -1,4 +1,4 @@
-name: Build GeckoView for Android
+name: Build GeckoView for Android X86_64
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 env:
   IS_PROD: 1
-  GECKOVIEW_VERSION: 156.0.22
+  GECKOVIEW_VERSION: 156.0.24
   GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
   GPG_KEY_BASE64: ${{ secrets.GPG_KEY_BASE64 }}
   GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
@@ -19,9 +19,6 @@ jobs:
   Android-X86_64:
     runs-on: ubuntu-26.04
     steps:
-      
-      - run: |
-          free -lh
       - name: Free Disk Space (Ubuntu)
         uses: BRAINSia/free-disk-space@v2
         with:
@@ -37,8 +34,7 @@ jobs:
         uses: pierotofy/set-swap-space@master
         with:
           swap-size-gb: 24
-      - name: Checkout gecko-dev
-        uses: actions/checkout@v7
+
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
@@ -46,15 +42,9 @@ jobs:
       - name: Install system dependencies
         run: |
           sudo apt update
-          sudo apt install -y \
-            build-essential \
-            cmake \
-            unzip \
-            zip \
-            wget \
-            curl \
-            git \
-            file
+          sudo apt install -y curl python3 python3-venv git make zip
+      - name: Checkout gecko-dev
+        uses: actions/checkout@v7
       - name: Bootstrap toolchain
         run: |
           ./mach --no-interactive bootstrap --application-choice="GeckoView/Firefox for Android"
@@ -97,7 +87,3 @@ jobs:
             --header 'Authorization: Bearer ${{ secrets.SONATYPE_TOKEN }}' \
             --form bundle=@central-bundle-x86.zip \
             https://central.sonatype.com/api/v1/publisher/upload
-
-
-
-
