@@ -33,7 +33,7 @@ jobs:
       - name: Set Swap Space
         uses: pierotofy/set-swap-space@master
         with:
-          swap-size-gb: 24
+          swap-size-gb: 36
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
