@@ -1,0 +1,176 @@
+diff --git a/widget/android/nsWindow.cpp b/widget/android/nsWindow.cpp
+index 55bd2afd328b..04fbc3d6cef0 100644
+--- a/widget/android/nsWindow.cpp
++++ b/widget/android/nsWindow.cpp
+@@ -54,7 +54,9 @@
+ #include "mozilla/StaticPrefs_widget.h"
+ #include "mozilla/TouchEvents.h"
+ #include "mozilla/WheelHandlingHelper.h"  // for WheelDeltaAdjustmentStrategy
++#ifdef ACCESSIBILITY
+ #include "mozilla/a11y/SessionAccessibility.h"
++#endif
+ #include "mozilla/dom/BrowserHost.h"
+ #include "mozilla/dom/BrowsingContext.h"
+ #include "mozilla/dom/CanonicalBrowsingContext.h"
+@@ -75,6 +77,9 @@
+ #include "mozilla/java/GeckoSystemStateListenerWrappers.h"
+ #include "mozilla/java/PanZoomControllerNatives.h"
+ #include "mozilla/java/SessionAccessibilityWrappers.h"
++#ifndef ACCESSIBILITY
++#include "mozilla/java/SessionAccessibilityNatives.h"
++#endif
+ #include "mozilla/java/SurfaceControlManagerWrappers.h"
+ #include "mozilla/jni/NativesInlines.h"
+ #include "mozilla/layers/APZEventState.h"
+@@ -130,6 +135,39 @@ using mozilla::java::sdk::IllegalStateException;
+ using GeckoPrintException = GeckoSession::GeckoPrintException;
+ static mozilla::LazyLogModule sGVSupportLog("GeckoViewSupport");
+ 
++#ifndef ACCESSIBILITY
++namespace mozilla {
++class SessionAccessibilitySettingsStub final
++    : public java::SessionAccessibility::Settings::Natives<
++          SessionAccessibilitySettingsStub> {
++ public:
++  static void ToggleNativeAccessibility(bool aEnable) {}
++};
++
++class SessionAccessibilityNativeProviderStub final
++    : public java::SessionAccessibility::NativeProvider::Natives<
++          SessionAccessibilityNativeProviderStub> {
++ public:
++  void GetNodeInfo(int32_t aId, jni::Object::Param aNodeInfo) {}
++  int32_t GetNodeClassName(int32_t aId) { return 0; }
++  void SetText(int32_t aId, jni::String::Param aText) {}
++  void Click(int32_t aId) {}
++  bool Pivot(int32_t aId, int32_t aGranularity, bool aForward, bool aInclusive) {
++    return false;
++  }
++  void ExploreByTouch(int32_t aId, float aX, float aY) {}
++  bool NavigateText(int32_t aId, int32_t aGranularity, int32_t aStartOffset,
++                    int32_t aEndOffset, bool aForward, bool aSelect) {
++    return false;
++  }
++  void SetSelection(int32_t aId, int32_t aStart, int32_t aEnd) {}
++  void Cut(int32_t aId) {}
++  void Copy(int32_t aId) {}
++  void Paste(int32_t aId) {}
++};
++}  // namespace mozilla
++#endif
++
+ // All the toplevel windows that have been created; these are in
+ // stacking order, so the window at gTopLevelWindows[0] is the topmost
+ // one.
+@@ -1981,6 +2019,7 @@ void GeckoViewSupport::Transfer(const GeckoSession::Window::LocalRef& inst,
+   mWindow->mAndroidView->mEventDispatcher->Attach(
+       java::EventDispatcher::Ref::From(aDispatcher));
+ 
++#ifdef ACCESSIBILITY
+   RefPtr<jni::DetachPromise> promise = mWindow->mSessionAccessibility.Detach();
+   if (aSessionAccessibility) {
+     // SessionAccessibility's JNI object isn't released immediately, it uses
+@@ -2005,6 +2044,7 @@ void GeckoViewSupport::Transfer(const GeckoSession::Window::LocalRef& inst,
+           }
+         });
+   }
++#endif
+ 
+   if (mIsReady) {
+     // We're in a transfer; update init-data and notify JS code.
+@@ -2038,6 +2078,7 @@ void GeckoViewSupport::AttachEditable(
+ void GeckoViewSupport::AttachAccessibility(
+     const GeckoSession::Window::LocalRef& inst,
+     jni::Object::Param aSessionAccessibility) {
++#ifdef ACCESSIBILITY
+   java::SessionAccessibility::NativeProvider::LocalRef sessionAccessibility(
+       inst.Env());
+   sessionAccessibility = java::SessionAccessibility::NativeProvider::Ref::From(
+@@ -2052,6 +2093,7 @@ void GeckoViewSupport::AttachAccessibility(
+       "GeckoViewSupport::AttachAccessibility",
+       [sa = java::SessionAccessibility::NativeProvider::GlobalRef(
+            sessionAccessibility)] { sa->SetAttached(true); });
++#endif
+ }
+ 
+ auto GeckoViewSupport::OnLoadRequest(mozilla::jni::String::Param aUri,
+@@ -2231,7 +2273,14 @@ void nsWindow::InitNatives() {
+   mozilla::widget::NPZCSupport::Init();
+ 
+   mozilla::widget::GeckoEditableSupport::Init();
++#ifdef ACCESSIBILITY
+   a11y::SessionAccessibility::Init();
++#else
++  java::SessionAccessibility::Settings::Natives<
++      SessionAccessibilitySettingsStub>::Init();
++  java::SessionAccessibility::NativeProvider::Natives<
++      SessionAccessibilityNativeProviderStub>::Init();
++#endif
+ }
+ 
+ void nsWindow::DetachNatives() {
+@@ -2239,7 +2288,9 @@ void nsWindow::DetachNatives() {
+   mEditableSupport.Detach();
+   mNPZCSupport.Detach();
+   mLayerViewSupport.Detach();
++#ifdef ACCESSIBILITY
+   mSessionAccessibility.Detach();
++#endif
+ }
+ 
+ /* static */
+@@ -3057,6 +3108,7 @@ void nsWindow::UserActivity() {
+   }
+ }
+ 
++#ifdef ACCESSIBILITY
+ RefPtr<mozilla::a11y::SessionAccessibility>
+ nsWindow::GetSessionAccessibility() {
+   auto acc(mSessionAccessibility.Access());
+@@ -3066,6 +3118,7 @@ nsWindow::GetSessionAccessibility() {
+ 
+   return acc.AsRefPtr();
+ }
++#endif
+ 
+ TextEventDispatcherListener* nsWindow::GetNativeTextEventDispatcherListener() {
+   nsWindow* top = FindTopLevel();
+diff --git a/widget/android/nsWindow.h b/widget/android/nsWindow.h
+index e031accc4b75..8d9be1aa0f76 100644
+--- a/widget/android/nsWindow.h
++++ b/widget/android/nsWindow.h
+@@ -42,9 +42,11 @@ class NPZCSupport;
+ class PlatformCompositorWidgetDelegate;
+ }  // namespace widget
+ 
++#ifdef ACCESSIBILITY
+ namespace a11y {
+ class SessionAccessibility;
+ }  // namespace a11y
++#endif
+ }  // namespace mozilla
+ 
+ class nsWindow final : public nsIWidget {
+@@ -98,10 +100,12 @@ class nsWindow final : public nsIWidget {
+       mEditableSupport;
+   mozilla::jni::Object::GlobalRef mEditableParent;
+ 
++#ifdef ACCESSIBILITY
+   // Object that implements native SessionAccessibility calls.
+   // Strong referenced by the Java instance.
+   mozilla::jni::NativeWeakPtr<mozilla::a11y::SessionAccessibility>
+       mSessionAccessibility;
++#endif
+ 
+   // Object that implements native GeckoView calls and associated states.
+   // nullptr for nsWindows that were not opened from GeckoView.
+@@ -229,7 +233,9 @@ class nsWindow final : public nsIWidget {
+ 
+   mozilla::jni::Object::Ref& GetEditableParent() { return mEditableParent; }
+ 
++#ifdef ACCESSIBILITY
+   RefPtr<mozilla::a11y::SessionAccessibility> GetSessionAccessibility();
++#endif
+ 
+   void RecvToolbarAnimatorMessageFromCompositor(int32_t aMessage) override;
+   void NotifyCompositorScrollUpdates(
