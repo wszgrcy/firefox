@@ -1,0 +1,13 @@
+diff --git a/mobile/android/moz.configure b/mobile/android/moz.configure
+index 79a1b7c25bee..bcf635c092d8 100644
+--- a/mobile/android/moz.configure
++++ b/mobile/android/moz.configure
+@@ -11,7 +11,7 @@ project_flag(
+ project_flag(
+     "MOZ_ANDROID_HLS_SUPPORT",
+     help="Enable HLS (HTTP Live Streaming) support (currently using the ExoPlayer library)",
+-    default=True,
++    default=False,
+ )
+ 
+ option(

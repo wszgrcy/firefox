@@ -1,0 +1,28 @@
+diff --git a/mobile/android/geckoview/build.gradle b/mobile/android/geckoview/build.gradle
+index 94f44acf91bd..bb9fd4a2f2ed 100644
+--- a/mobile/android/geckoview/build.gradle
++++ b/mobile/android/geckoview/build.gradle
+@@ -146,6 +146,23 @@ android {
+                 manifest.srcFile "${topobjdir}/mobile/android/geckoview/src/main/AndroidManifest_overlay.xml"
+             }
+         }
++
++        androidTest {
++            java {
++                // VideoCaptureTest.kt depends on WebRTC classes, so exclude it
++                // when WebRTC is disabled.
++                if (!mozconfig.substs.MOZ_WEBRTC) {
++                    exclude 'org/mozilla/geckoview/test/VideoCaptureTest.kt'
++                }
++            }
++            if (!mozconfig.substs.MOZ_WEBRTC) {
++                // Kotlin files are collected separately from the java source set,
++                // so also exclude it from the kotlin source set.
++                kotlin {
++                    exclude 'org/mozilla/geckoview/test/VideoCaptureTest.kt'
++                }
++            }
++        }
+     }
+ 
+     buildFeatures {

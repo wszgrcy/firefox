@@ -1,0 +1,26 @@
+diff --git a/mobile/android/installer/package-manifest.in b/mobile/android/installer/package-manifest.in
+index b16d2c3df257..4cee6b2e9517 100644
+--- a/mobile/android/installer/package-manifest.in
++++ b/mobile/android/installer/package-manifest.in
+@@ -108,9 +108,6 @@
+ @BINPATH@/actors/*
+ 
+ ; [Browser Chrome Files]
+-@BINPATH@/chrome/pdfjs.manifest
+-@BINPATH@/chrome/pdfjs/*
+-@BINPATH@/defaults/pref/PdfJsDefaultPrefs.js
+ @BINPATH@/chrome/toolkit@JAREXT@
+ @BINPATH@/chrome/toolkit.manifest
+ 
+diff --git a/toolkit/components/moz.build b/toolkit/components/moz.build
+index 0a11cad87db6..c10174d7310d 100644
+--- a/toolkit/components/moz.build
++++ b/toolkit/components/moz.build
+@@ -62,7 +62,6 @@ DIRS += [
+     "pageextractor",
+     "parentalcontrols",
+     "passwordmgr",
+-    "pdfjs",
+     "places",
+     "processtools",
+     "processsingleton",

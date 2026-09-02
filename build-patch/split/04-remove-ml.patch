@@ -1,0 +1,12 @@
+diff --git a/toolkit/components/moz.build b/toolkit/components/moz.build
+index 0a11cad87db6..d224f8a6421e 100644
+--- a/toolkit/components/moz.build
++++ b/toolkit/components/moz.build
+@@ -56,7 +56,6 @@ DIRS += [
+     "kvstore",
+     "media",
+     "mediasniffer",
+-    "ml",
+     "mozintl",
+     "mozprotocol",
+     "pageextractor",

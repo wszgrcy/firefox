@@ -1,0 +1,12 @@
+diff --git a/toolkit/components/moz.build b/toolkit/components/moz.build
+index 0a11cad87db6..94d3d66db40e 100644
+--- a/toolkit/components/moz.build
++++ b/toolkit/components/moz.build
+@@ -83,7 +83,6 @@ DIRS += [
+     "startup",
+     "statusfilter",
+     "telemetry",
+-    "translations",
+     "thumbnails",
+     "timermanager",
+     "tooltiptext",
