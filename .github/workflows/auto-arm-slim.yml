@@ -62,6 +62,8 @@ jobs:
           git apply build-patch/split/03-disable-hls.patch
           git apply build-patch/split/04-remove-ml.patch
           git apply build-patch/split/05-remove-translations.patch
+          git apply build-patch/split/android-a11y-disable.patch
+          git apply build-patch/split/disable-printing.patch
           git diff --stat
       - name: Bootstrap toolchain
         run: |
@@ -98,7 +100,7 @@ jobs:
           ac_add_options RUSTC_OPT_LEVEL=s
           ac_add_options --disable-debug-symbols
           # 需要配合build-patch/split/android-a11y-disable.patch补丁
-          # ac_add_options --disable-accessibility
+          ac_add_options --disable-accessibility
           # 需要配合build-patch/split/disable-printing.patch补丁
           ac_add_options --disable-printing
           
