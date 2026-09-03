@@ -1,0 +1,71 @@
+diff --git a/widget/android/components.conf b/widget/android/components.conf
+index 97b84da47b17..12bd03acb73e 100644
+--- a/widget/android/components.conf
++++ b/widget/android/components.conf
+@@ -54,19 +54,6 @@ Classes = [
+         'type': 'nsClipboardHelper',
+         'headers': ['/widget/nsClipboardHelper.h'],
+     },
+-    {
+-        'cid': '{841387c8-72e6-484b-9296-bf6eea80d58a}',
+-        'contract_ids': ['@mozilla.org/gfx/printsettings-service;1'],
+-        'type': 'nsPrintSettingsServiceAndroid',
+-        'headers': ['/widget/android/nsPrintSettingsServiceAndroid.h'],
+-        'init_method': 'Init',
+-    },
+-    {
+-        'cid': '{d3f69889-e13a-4321-980c-a39332e21f34}',
+-        'contract_ids': ['@mozilla.org/gfx/devicecontextspec;1'],
+-        'type': 'nsDeviceContextSpecAndroid',
+-        'headers': ['/widget/android/nsDeviceContextAndroid.h'],
+-    },
+     {
+         'cid': '{948a0023-e3a7-11d2-96cf-0060b0fb9956}',
+         'contract_ids': ['@mozilla.org/widget/htmlformatconverter;1'],
+@@ -105,3 +92,21 @@ Classes = [
+         'processes': ProcessSelector.MAIN_PROCESS_ONLY,
+     },
+ ]
++
++if defined('NS_PRINTING'):
++    Classes += [
++        {
++            'cid': '{841387c8-72e6-484b-9296-bf6eea80d58a}',
++            'contract_ids': ['@mozilla.org/gfx/printsettings-service;1'],
++            'type': 'nsPrintSettingsServiceAndroid',
++            'headers': ['/widget/android/nsPrintSettingsServiceAndroid.h'],
++            'init_method': 'Init',
++        },
++        {
++            'cid': '{d3f69889-e13a-4321-980c-a39332e21f34}',
++            'contract_ids': ['@mozilla.org/gfx/devicecontextspec;1'],
++            'type': 'nsDeviceContextSpecAndroid',
++            'headers': ['/widget/android/nsDeviceContextAndroid.h'],
++        },
++    ]
++
+diff --git a/widget/android/moz.build b/widget/android/moz.build
+index 87731ea7c2af..c0ad6d04bab0 100644
+--- a/widget/android/moz.build
++++ b/widget/android/moz.build
+@@ -151,7 +151,6 @@ UNIFIED_SOURCES += [
+     "nsDeviceContextAndroid.cpp",
+     "nsDragService.cpp",
+     "nsLookAndFeel.cpp",
+-    "nsPrintSettingsServiceAndroid.cpp",
+     "nsUserIdleServiceAndroid.cpp",
+     "nsWidgetFactory.cpp",
+     "nsWindow.cpp",
+@@ -160,6 +159,12 @@ UNIFIED_SOURCES += [
+     "WebExecutorSupport.cpp",
+ ]
+ 
++if CONFIG["NS_PRINTING"]:
++    SOURCES += [
++        "nsPrintSettingsServiceAndroid.cpp",
++    ]
++
++
+ XPCOM_MANIFESTS += [
+     "components.conf",
+ ]

@@ -99,6 +99,8 @@ jobs:
           ac_add_options --disable-debug-symbols
           # 需要配合build-patch/split/android-a11y-disable.patch补丁
           # ac_add_options --disable-accessibility
+          # 需要配合build-patch/split/disable-printing.patch补丁
+          ac_add_options --disable-printing
           
           EOF
           cat mozconfig
