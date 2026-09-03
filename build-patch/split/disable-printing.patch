@@ -22,7 +22,7 @@ index 97b84da47b17..12bd03acb73e 100644
      {
          'cid': '{948a0023-e3a7-11d2-96cf-0060b0fb9956}',
          'contract_ids': ['@mozilla.org/widget/htmlformatconverter;1'],
-@@ -105,3 +92,21 @@ Classes = [
+@@ -105,3 +92,20 @@ Classes = [
          'processes': ProcessSelector.MAIN_PROCESS_ONLY,
      },
  ]
@@ -43,7 +43,6 @@ index 97b84da47b17..12bd03acb73e 100644
 +            'headers': ['/widget/android/nsDeviceContextAndroid.h'],
 +        },
 +    ]
-+
 diff --git a/widget/android/moz.build b/widget/android/moz.build
 index 87731ea7c2af..c0ad6d04bab0 100644
 --- a/widget/android/moz.build
